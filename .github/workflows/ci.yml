@@ -26,3 +26,16 @@ jobs:
 
       - name: Lancer les tests
         run: pytest -q
+      - name: Notification Discord (succès)
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d "{\"content\":\"✅ CI réussie sur la branche ${{ github.ref_name }} par ${{ github.actor }}\"}" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notification Discord (échec)
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d "{\"content\":\"❌ CI échouée sur la branche ${{ github.ref_name }} par ${{ github.actor }}\"}" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
