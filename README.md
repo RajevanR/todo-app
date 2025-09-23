@@ -1,4 +1,4 @@
-# ToDoApp
+# ToDoApp – Contact
 
 Projet d’exemple pour TP2 – Git, branches et gestion de conflits.
 
