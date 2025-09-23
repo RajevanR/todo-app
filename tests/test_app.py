@@ -7,3 +7,6 @@ def test_add_and_count():
     assert count_tasks(items2) == 1
     items3 = add_task(items2, "B")
     assert count_tasks(items3) == 2
+
+def test_fail():
+    assert 2 + 2 == 5
