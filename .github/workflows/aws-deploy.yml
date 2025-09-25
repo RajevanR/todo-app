@@ -1,0 +1,47 @@
+name: AWS Deploy
+
+on:
+  push:
+    branches: [ "main" ]   # déploiement prod à chaque push sur main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python (pour Ansible)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Préparer la clé SSH (depuis secret)
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/aws_key.pem
+          chmod 600 ~/.ssh/aws_key.pem
+
+      # Option: renseigner known_hosts (sinon on force no host key checking côté inventory)
+      - name: Ajouter l'hôte EC2 dans known_hosts
+        run: |
+          EC2_IP=$(grep -Eo '^[0-9\.]+' deploy/inventory_aws.ini | head -1)
+          ssh-keyscan -H "$EC2_IP" >> ~/.ssh/known_hosts || true
+
+      - name: Déployer avec Ansible
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+        run: |
+          ansible --version
+          ansible-playbook -i deploy/inventory_aws.ini deploy/deploy.yml
+
+      - name: Nettoyer la clé (toujours)
+        if: always()
+        run: |
+          shred -u ~/.ssh/aws_key.pem || rm -f ~/.ssh/aws_key.pem
