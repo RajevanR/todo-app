@@ -1,0 +1,43 @@
+- name: Déploiement ToDoApp sur serveur Docker
+  hosts: todo
+  become: yes
+  gather_facts: false
+
+  vars:
+    repo_url: "https://github.com/RajevanR/todo-app.git" 
+
+    repo_branch: "dev"
+    app_dir: "/opt/todo-app"
+
+  pre_tasks:
+    - name: S'assurer que Python3 est présent (nécessaire à Ansible)
+      raw: test -e /usr/bin/python3 || (apt-get update -y && apt-get install -y python3 python3-apt)
+
+    - name: Mettre à jour l'index APT
+      apt:
+        update_cache: yes
+
+  tasks:
+    - name: Installer dépendances système minimales
+      apt:
+        name:
+          - git
+          - python3-pip
+        state: present
+
+    - name: Cloner / mettre à jour le dépôt
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ repo_branch }}"
+        force: yes
+
+    - name: Installer les dépendances Python de l’app
+      pip:
+        requirements: "{{ app_dir }}/requirements.txt"
+        executable: pip3
+
+    - name: (Optionnel) Exécuter les tests
+      command: python3 -m pytest -q
+      args:
+        chdir: "{{ app_dir }}"

@@ -1,4 +1,6 @@
-# ToDoApp
+# ToDoApp – Contact & Footer
+
+[![CI](https://github.com/RajevanR/todo-app/actions/workflows/ci.yml/badge.svg)](https://github.com/RajevanR/todo-app/actions/workflows/ci.yml)
 
 Projet d’exemple pour TP2 – Git, branches et gestion de conflits.
 

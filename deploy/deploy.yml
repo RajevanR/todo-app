@@ -1,0 +1,80 @@
+- name: Déploiement ToDoApp sur EC2 (prod)
+  hosts: ec2
+  become: yes
+  gather_facts: false
+
+  vars:
+    app_dir: "/var/www/todo-app"
+    repo_url: "https://github.com/RajevanR/todo-app.git"   
+    repo_branch: "main"                                       
+
+  pre_tasks:
+    - name: S'assurer que python3 est présent (nécessaire à Ansible)
+      raw: test -e /usr/bin/python3 || (sudo apt-get update -y && sudo apt-get install -y python3 python3-apt)
+
+  tasks:
+    - name: Mettre à jour l’index APT
+      apt:
+        update_cache: yes
+
+    - name: Installer dépendances système (nginx, git, pip)
+      apt:
+        name:
+          - nginx
+          - git
+          - python3-pip
+        state: present
+
+    - name: Cloner / mettre à jour le dépôt applicatif
+      git:
+        repo: "{{ repo_url }}"
+        dest: "/opt/todo-app"
+        version: "{{ repo_branch }}"
+        force: yes
+
+    - name: Créer le répertoire web
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Générer une page d’accueil (statique)
+      copy:
+        dest: "{{ app_dir }}/index.html"
+        content: |
+          <!doctype html>
+          <html><head><meta charset="utf-8"><title>ToDoApp</title></head>
+          <body style="font-family: sans-serif">
+            <h1>ToDoApp – Déployée via Ansible sur AWS</h1>
+            <p>Branche: {{ repo_branch }} | Hôte: {{ inventory_hostname }} | Date: {{ ansible_date_time.iso8601 }}</p>
+          </body></html>
+
+    - name: Configurer Nginx pour servir /var/www/todo-app
+      copy:
+        dest: /etc/nginx/sites-available/todo-app
+        content: |
+          server {
+            listen 80;
+            server_name _;
+            root {{ app_dir }};
+            index index.html;
+            location / { try_files $uri $uri/ =404; }
+          }
+
+    - name: Activer le site Nginx
+      file:
+        src: /etc/nginx/sites-available/todo-app
+        dest: /etc/nginx/sites-enabled/todo-app
+        state: link
+        force: yes
+
+    - name: Désactiver le default site (si présent)
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Redémarrer Nginx
+      service:
+        name: nginx
+        state: restarted
+        enabled: yes
