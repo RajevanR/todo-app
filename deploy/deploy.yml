@@ -1,7 +1,7 @@
 - name: Déploiement ToDoApp sur EC2 (prod)
   hosts: ec2
   become: yes
-  gather_facts: false
+  gather_facts: true
 
   vars:
     app_dir: "/var/www/todo-app"
