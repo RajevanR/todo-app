@@ -4,7 +4,7 @@
   gather_facts: false
 
   vars:
-    repo_url: "https://github.com/RajevanR/todo-app.git"   # ⬅️ Remplace <TON-USER> par ton identifiant GitHub
+    repo_url: "https://github.com/RajevanR/todo-app.git" 
     repo_branch: "dev"
     app_dir: "/opt/todo-app"
 
